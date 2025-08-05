@@ -41,8 +41,8 @@ def main():
         st.header("Configuration")
         num_candidates = st.slider(
             "Number of top candidates to show",
-            min_value=1,
-            max_value=20,
+            min_value=5,
+            max_value=10,
             value=10,
             help="Select how many top candidates to display"
         )
