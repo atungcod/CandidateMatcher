@@ -37,8 +37,11 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### AI and ML Services
-- **OpenAI API**: GPT-4o model for generating candidate fit summaries (requires OPENAI_API_KEY)
-- **Sentence Transformers**: "all-MiniLM-L6-v2" model for semantic text embeddings
+- **Multi-Provider AI**: Supports Google Gemini (free tier), Anthropic Claude, and OpenAI GPT models for candidate fit summaries
+  - Google Gemini: gemini-2.5-flash (has free tier - recommended for cost-effective deployment)
+  - Anthropic Claude: claude-sonnet-4-20250514 
+  - OpenAI GPT: gpt-4o model (fallback option)
+- **TF-IDF Vectorization**: Uses scikit-learn TfidfVectorizer for text embeddings (no external dependencies)
 - **scikit-learn**: Cosine similarity calculations
 
 ### Document Processing Libraries
@@ -52,5 +55,9 @@ Preferred communication style: Simple, everyday language.
 - **numpy**: Numerical computations for embeddings and similarity scores
 
 ### Environment Configuration
-- Requires `OPENAI_API_KEY` environment variable for AI summary generation
-- All other dependencies are self-contained without external service requirements
+- **Optional AI API Keys** for enhanced summaries (system works without them):
+  - `GEMINI_API_KEY` - Google Gemini (recommended - has free tier)
+  - `ANTHROPIC_API_KEY` - Anthropic Claude
+  - `OPENAI_API_KEY` - OpenAI GPT
+- Core functionality (text matching, similarity scoring) works without any API keys
+- All document processing dependencies are self-contained

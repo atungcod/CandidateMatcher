@@ -49,21 +49,27 @@ def main():
         
         # Check if AI summarizer is available
         ai_available = ai_summarizer.is_available
+        provider_info = ai_summarizer.get_provider_info()
         
         if ai_available:
             generate_summaries = st.checkbox(
                 "Generate AI summaries",
                 value=True,
-                help="Generate AI-powered explanations for why candidates are good fits"
+                help=f"Generate AI-powered explanations using {provider_info['provider'].title()} {provider_info['model']}"
             )
+            st.info(f"🤖 AI Provider: {provider_info['provider'].title()} ({provider_info['model']})")
         else:
             generate_summaries = st.checkbox(
                 "Generate AI summaries",
                 value=False,
                 disabled=True,
-                help="⚠️ OpenAI API key required for AI summaries. Add OPENAI_API_KEY to enable this feature."
+                help="AI API key required for summaries"
             )
-            st.warning("💡 Add your OpenAI API key to enable AI-powered candidate summaries!")
+            st.warning("💡 **Enable AI Summaries:**\n\n"
+                      "Add one of these API keys:\n"
+                      "• **GEMINI_API_KEY** (Google Gemini - has free tier)\n"
+                      "• **ANTHROPIC_API_KEY** (Anthropic Claude)\n" 
+                      "• **OPENAI_API_KEY** (OpenAI GPT)")
     
     # Main content area
     col1, col2 = st.columns([1, 1])
