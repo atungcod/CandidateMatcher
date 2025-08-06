@@ -15,6 +15,12 @@ st.set_page_config(
     layout="wide"
 )
 
+# Initialize session state for navigation
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 'search'
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = None
+
 # Initialize services
 @st.cache_resource
 def initialize_services():
@@ -25,7 +31,8 @@ def initialize_services():
     ai_summarizer = AISummarizer()
     return file_processor, embedding_service, similarity_calculator, ai_summarizer
 
-def main():
+def show_search_page():
+    """Display the search/input page"""
     st.title("🎯 Job Candidate Recommendation System")
     st.markdown("Find the best candidates for your job using AI-powered matching")
     
@@ -153,7 +160,7 @@ def main():
                         'content': resume_text.strip()
                     })
     
-    # Process and display results
+    # Process and analyze candidates
     if st.button("🔍 Find Best Candidates", type="primary", use_container_width=True):
         if not job_description.strip():
             st.error("Please enter a job description")
@@ -210,103 +217,146 @@ def main():
                 progress_bar.progress(100, text="Analysis complete!")
                 progress_bar.empty()
                 
-                # Display results
-                st.header("🏆 Top Candidates")
-                
-                for i, candidate in enumerate(top_candidates):
-                    with st.expander(
-                        f"#{i+1} - {candidate['name']} (Similarity: {candidate['similarity']:.2%})",
-                        expanded=(i < 3)  # Expand top 3 by default
-                    ):
-                        col_left, col_right = st.columns([2, 1])
-                        
-                        with col_left:
-                            st.subheader("Resume Content")
-                            st.text_area(
-                                "Content:",
-                                value=candidate['content'][:1000] + ("..." if len(candidate['content']) > 1000 else ""),
-                                height=200,
-                                disabled=True,
-                                key=f"content_{i}"
-                            )
-                        
-                        with col_right:
-                            st.subheader("Match Score")
-                            # Create a visual score representation
-                            score_percentage = candidate['similarity'] * 100
-                            st.metric(
-                                label="Similarity Score",
-                                value=f"{score_percentage:.1f}%",
-                                delta=f"Rank #{i+1}"
-                            )
-                            
-                            # Score bar visualization
-                            progress_color = "🟩" if score_percentage >= 70 else "🟨" if score_percentage >= 50 else "🟥"
-                            st.write(f"Match Quality: {progress_color}")
-                        
-                        # Generate AI summary if enabled
-                        if generate_summaries:
-                            with st.spinner(f"Generating AI summary for {candidate['name']}..."):
-                                try:
-                                    summary = ai_summarizer.generate_fit_summary(
-                                        job_description, 
-                                        candidate['content'],
-                                        candidate['similarity']
-                                    )
-                                    
-                                    st.subheader("🤖 AI Analysis")
-                                    st.info(summary)
-                                    
-                                except Exception as e:
-                                    st.warning(f"Could not generate AI summary: {str(e)}")
-                
-                # Summary statistics
-                st.header("📊 Analysis Summary")
-                col_stat1, col_stat2, col_stat3 = st.columns(3)
-                
-                with col_stat1:
-                    st.metric(
-                        "Total Candidates Analyzed",
-                        len(resumes_data)
-                    )
-                
-                with col_stat2:
-                    avg_similarity = np.mean([c['similarity'] for c in top_candidates])
-                    st.metric(
-                        "Average Similarity (Top Candidates)",
-                        f"{avg_similarity:.1%}"
-                    )
-                
-                with col_stat3:
-                    best_match = top_candidates[0]['similarity'] if top_candidates else 0
-                    st.metric(
-                        "Best Match Score",
-                        f"{best_match:.1%}"
-                    )
-                
-                # Download results option
-                if st.button("📥 Download Results as CSV"):
-                    results_df = pd.DataFrame([
-                        {
-                            'Rank': i + 1,
-                            'Candidate': candidate['name'],
-                            'Similarity_Score': f"{candidate['similarity']:.4f}",
-                            'Similarity_Percentage': f"{candidate['similarity']:.2%}"
-                        }
-                        for i, candidate in enumerate(top_candidates)
-                    ])
-                    
-                    csv = results_df.to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv,
-                        file_name="candidate_recommendations.csv",
-                        mime="text/csv"
-                    )
+                # Store results in session state and navigate to results page
+                st.session_state.analysis_results = {
+                    'job_description': job_description,
+                    'top_candidates': top_candidates,
+                    'total_candidates': len(resumes_data),
+                    'generate_summaries': generate_summaries,
+                    'ai_summarizer': ai_summarizer
+                }
+                st.session_state.current_page = 'results'
+                st.rerun()
         
         except Exception as e:
             st.error(f"An error occurred during analysis: {str(e)}")
             st.exception(e)
+
+def show_results_page():
+    """Display the results page with candidate rankings"""
+    results = st.session_state.analysis_results
+    
+    if not results:
+        st.error("No analysis results found. Please go back and run an analysis first.")
+        if st.button("← Back to Search"):
+            st.session_state.current_page = 'search'
+            st.rerun()
+        return
+    
+    # Header with navigation
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("← Back to Search"):
+            st.session_state.current_page = 'search'
+            st.rerun()
+    
+    with col2:
+        st.title("🏆 Top Candidates")
+        st.markdown(f"**Results for:** {results['job_description'][:100]}..." if len(results['job_description']) > 100 else f"**Results for:** {results['job_description']}")
+    
+    # Summary statistics
+    st.header("📊 Analysis Summary")
+    col_stat1, col_stat2, col_stat3 = st.columns(3)
+    
+    with col_stat1:
+        st.metric(
+            "Total Candidates Analyzed",
+            results['total_candidates']
+        )
+    
+    with col_stat2:
+        avg_similarity = np.mean([c['similarity'] for c in results['top_candidates']])
+        st.metric(
+            "Average Similarity (Top Candidates)",
+            f"{avg_similarity:.1%}"
+        )
+    
+    with col_stat3:
+        best_match = results['top_candidates'][0]['similarity'] if results['top_candidates'] else 0
+        st.metric(
+            "Best Match Score",
+            f"{best_match:.1%}"
+        )
+    
+    # Display candidates
+    st.header("🎯 Candidate Rankings")
+    
+    for i, candidate in enumerate(results['top_candidates']):
+        with st.expander(
+            f"#{i+1} - {candidate['name']} (Similarity: {candidate['similarity']:.2%})",
+            expanded=(i < 3)  # Expand top 3 by default
+        ):
+            col_left, col_right = st.columns([2, 1])
+            
+            with col_left:
+                st.subheader("Resume Content")
+                st.text_area(
+                    "Content:",
+                    value=candidate['content'][:1000] + ("..." if len(candidate['content']) > 1000 else ""),
+                    height=200,
+                    disabled=True,
+                    key=f"content_{i}"
+                )
+            
+            with col_right:
+                st.subheader("Match Score")
+                # Create a visual score representation
+                score_percentage = candidate['similarity'] * 100
+                st.metric(
+                    label="Similarity Score",
+                    value=f"{score_percentage:.1f}%",
+                    delta=f"Rank #{i+1}"
+                )
+                
+                # Score bar visualization
+                progress_color = "🟩" if score_percentage >= 70 else "🟨" if score_percentage >= 50 else "🟥"
+                st.write(f"Match Quality: {progress_color}")
+            
+            # Generate AI summary if enabled
+            if results['generate_summaries']:
+                with st.spinner(f"Generating AI summary for {candidate['name']}..."):
+                    try:
+                        summary = results['ai_summarizer'].generate_fit_summary(
+                            results['job_description'], 
+                            candidate['content'],
+                            candidate['similarity']
+                        )
+                        
+                        st.subheader("🤖 AI Analysis")
+                        st.info(summary)
+                        
+                    except Exception as e:
+                        st.warning(f"Could not generate AI summary: {str(e)}")
+    
+    # Download results option
+    if st.button("📥 Download Results as CSV"):
+        results_df = pd.DataFrame([
+            {
+                'Rank': i + 1,
+                'Candidate': candidate['name'],
+                'Similarity_Score': f"{candidate['similarity']:.4f}",
+                'Similarity_Percentage': f"{candidate['similarity']:.2%}"
+            }
+            for i, candidate in enumerate(results['top_candidates'])
+        ])
+        
+        csv = results_df.to_csv(index=False)
+        st.download_button(
+            label="Download CSV",
+            data=csv,
+            file_name="candidate_recommendations.csv",
+            mime="text/csv"
+        )
+
+def main():
+    """Main application with page routing"""
+    
+    # Display the appropriate page based on session state
+    if st.session_state.current_page == 'search':
+        show_search_page()
+    elif st.session_state.current_page == 'results':
+        show_results_page()
+
 
 if __name__ == "__main__":
     main()
