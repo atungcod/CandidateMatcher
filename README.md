@@ -19,5 +19,5 @@ This application recommends the best candidates for a job based on relevance.
 
 ## PROCESS
 1. Entered the basic prompt into Replit to create a framework to build off of. I took note of the UI/UX and identified areas of improvement. Understood the pages and inputs from the user.
-2. Set up OpenAI key.
-3. Hard-coded additional features that I wanted.
+2. Set up API key for GoogleAI to help with candidate summaries.
+3. Hard-coded additional features that I wanted: fixed UI to make the app stand out more, created two separate pages (home screen for entering information and display page for information about top candidates.
