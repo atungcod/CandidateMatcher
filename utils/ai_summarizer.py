@@ -35,7 +35,8 @@ class AISummarizer:
     def _try_gemini(self) -> bool:
         """Try to initialize Google Gemini"""
         try:
-            gemini_key = os.getenv("GEMINI_API_KEY")
+            # Use the provided API key or environment variable
+            gemini_key = "AIzaSyA8IiyUq0iH-1ZYY4hVWPL_csk4GbYK4BY" or os.getenv("GEMINI_API_KEY")
             if gemini_key:
                 from google import genai
                 self.client = genai.Client(api_key=gemini_key)
@@ -43,8 +44,8 @@ class AISummarizer:
                 self.model = "gemini-2.5-flash"
                 self.is_available = True
                 return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Gemini initialization failed: {e}")
         return False
     
     def _try_anthropic(self) -> bool:
@@ -127,15 +128,15 @@ class AISummarizer:
     def _generate_gemini_summary(self, prompt: str) -> str:
         """Generate summary using Google Gemini"""
         response = self.client.models.generate_content(
-            model=self.model,
+            model="gemini-2.5-flash",
             contents=prompt
         )
-        return response.text or "Could not generate summary"
+        return response.text if response.text else "Could not generate summary"
     
     def _generate_anthropic_summary(self, prompt: str) -> str:
         """Generate summary using Anthropic Claude"""
         response = self.client.messages.create(
-            model=self.model,
+            model="claude-sonnet-4-20250514",
             max_tokens=500,
             temperature=0.7,
             system="You are an expert HR analyst and recruiter. Your job is to analyze how well a candidate matches a job description and provide clear, actionable insights.",
@@ -146,12 +147,12 @@ class AISummarizer:
                 }
             ]
         )
-        return response.content[0].text
+        return response.content[0].text if response.content and hasattr(response.content[0], 'text') else "Could not generate summary"
     
     def _generate_openai_summary(self, prompt: str) -> str:
         """Generate summary using OpenAI"""
         response = self.client.chat.completions.create(
-            model=self.model,
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
@@ -165,7 +166,7 @@ class AISummarizer:
             max_tokens=500,
             temperature=0.7
         )
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip() if response.choices[0].message.content else "Could not generate summary"
     
     def _get_available_providers_message(self) -> str:
         """Get message about available AI providers"""
@@ -285,40 +286,63 @@ Please provide a 2-3 paragraph summary that:
 Keep it concise and actionable for hiring decisions.
 """
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert HR analyst specializing in candidate comparison and hiring recommendations."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                max_tokens=400,
-                temperature=0.7
-            )
-            
-            return response.choices[0].message.content.strip()
+            if self.provider == "gemini":
+                response = self.client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                return response.text if response.text else "Could not generate comparison"
+            elif self.provider == "openai":
+                response = self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert HR analyst specializing in candidate comparison and hiring recommendations."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    max_tokens=400,
+                    temperature=0.7
+                )
+                return response.choices[0].message.content.strip() if response.choices[0].message.content else "Could not generate comparison"
+            else:
+                return "Comparison feature not available with current provider"
             
         except Exception as e:
             raise Exception(f"Failed to generate comparison summary: {str(e)}")
     
     def check_api_availability(self) -> bool:
         """
-        Check if OpenAI API is available and working
+        Check if current AI provider API is available and working
         
         Returns:
             bool: True if API is working, False otherwise
         """
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": "Test"}],
-                max_tokens=5
-            )
-            return True
+            if self.provider == "gemini":
+                response = self.client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents="Test"
+                )
+                return bool(response.text)
+            elif self.provider == "openai":
+                response = self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": "Test"}],
+                    max_tokens=5
+                )
+                return True
+            elif self.provider == "anthropic":
+                response = self.client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=5,
+                    messages=[{"role": "user", "content": "Test"}]
+                )
+                return True
+            return False
         except Exception:
             return False

@@ -244,39 +244,17 @@ def show_search_page():
         }
     }
     </style>
-    """, unsafe_allow_html=True)
-    
+    """,
+                unsafe_allow_html=True)
+
     # Enhanced hero section
     st.markdown("""
     <div class="hero-section">
         <h1>🎯 Smart Candidate Matching</h1>
         <p>AI-powered recruitment made simple, fast, and incredibly effective</p>
     </div>
-    """, unsafe_allow_html=True)
-    
-    # Feature showcase
-    st.markdown("""
-    <div class="feature-showcase">
-        <h3 style="text-align: center; margin-top: 0; color: #333;">Why Choose Smart Matching?</h3>
-        <div class="feature-grid">
-            <div class="feature-item">
-                <span class="feature-icon">⚡</span>
-                <h4>Lightning Fast</h4>
-                <p>Seconds not hours</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">🎯</span>
-                <h4>Precise Matching</h4>
-                <p>AI-powered accuracy</p>
-            </div>
-            <div class="feature-item">
-                <span class="feature-icon">💡</span>
-                <h4>Smart Insights</h4>
-                <p>Detailed explanations</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    """,
+                unsafe_allow_html=True)
 
     # Initialize services
     try:
@@ -299,7 +277,6 @@ def show_search_page():
         # Check if AI summarizer is available
         ai_available = ai_summarizer.is_available
         provider_info = ai_summarizer.get_provider_info()
-        API_KEY = "AIzaSyA8IiyUq0iH-1ZYY4hVWPL_csk4GbYK4BY"
 
         if ai_available:
             generate_summaries = st.checkbox(
@@ -320,31 +297,35 @@ def show_search_page():
 
     # Enhanced main content area with styled containers
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
-    
+
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.markdown('<div class="input-section job-section">', unsafe_allow_html=True)
+        st.markdown('<div class="input-section job-section">',
+                    unsafe_allow_html=True)
         st.header("📋 Job Description")
         job_description = st.text_area(
             "Enter the job description:",
             height=300,
-            placeholder="Describe the ideal candidate, required skills, experience, and key responsibilities...",
-            help="💡 Tip: Include specific skills, experience levels, and key responsibilities for better matching"
+            placeholder=
+            "Describe the ideal candidate, required skills, experience, and key responsibilities...",
+            help=
+            "💡 Tip: Include specific skills, experience levels, and key responsibilities for better matching"
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="input-section upload-section">', unsafe_allow_html=True)
+        st.markdown('<div class="input-section upload-section">',
+                    unsafe_allow_html=True)
         st.header("📄 Candidate Resumes")
 
         # Enhanced input method selection
         st.markdown("**Choose how to provide resumes:**")
-        input_method = st.radio("Resume Input Method",
-                                ["📁 Upload Files", "✏️ Text Input"],
-                                horizontal=True,
-                                help="Upload files or paste resume text directly",
-                                label_visibility="collapsed")
+        input_method = st.radio(
+            "Resume Input Method", ["📁 Upload Files", "✏️ Text Input"],
+            horizontal=True,
+            help="Upload files or paste resume text directly",
+            label_visibility="collapsed")
 
         resumes_data = []
 
@@ -354,27 +335,35 @@ def show_search_page():
                 "Upload resume files",
                 type=['pdf', 'txt', 'docx'],
                 accept_multiple_files=True,
-                help="✅ Supported formats: PDF, TXT, DOCX | 📁 Multiple files allowed")
+                help=
+                "✅ Supported formats: PDF, TXT, DOCX | 📁 Multiple files allowed"
+            )
 
             if uploaded_files:
                 with st.spinner("🔄 Processing uploaded files..."):
                     progress_text = st.empty()
                     for i, uploaded_file in enumerate(uploaded_files):
-                        progress_text.text(f"Processing {uploaded_file.name}...")
+                        progress_text.text(
+                            f"Processing {uploaded_file.name}...")
                         try:
-                            content = file_processor.process_file(uploaded_file)
+                            content = file_processor.process_file(
+                                uploaded_file)
                             if content.strip():
                                 resumes_data.append({
                                     'name': uploaded_file.name,
                                     'content': content
                                 })
                         except Exception as e:
-                            st.error(f"❌ Error processing {uploaded_file.name}: {str(e)}")
-                    
+                            st.error(
+                                f"❌ Error processing {uploaded_file.name}: {str(e)}"
+                            )
+
                     progress_text.empty()
 
                 if resumes_data:
-                    st.success(f"✅ Successfully processed {len(resumes_data)} resume(s)")
+                    st.success(
+                        f"✅ Successfully processed {len(resumes_data)} resume(s)"
+                    )
 
         else:  # Text Input
             st.markdown("**Enter resumes as text (one per text area):**")
@@ -400,31 +389,35 @@ def show_search_page():
                     f"📝 Resume {i+1}:",
                     height=150,
                     key=f"resume_text_{i}",
-                    placeholder=f"Paste the full resume content for candidate {i+1} here...")
+                    placeholder=
+                    f"Paste the full resume content for candidate {i+1} here..."
+                )
 
                 if resume_text.strip():
                     resumes_data.append({
                         'name': f"Candidate {i+1}",
                         'content': resume_text.strip()
                     })
-        
+
         st.markdown('</div>', unsafe_allow_html=True)  # Close upload section
-    
+
     st.markdown('</div>', unsafe_allow_html=True)  # Close input container
 
     # Enhanced CTA section with container
     st.markdown('<div class="cta-container">', unsafe_allow_html=True)
-    
+
     # Display resume count if available
     if resumes_data:
         st.info(f"📊 Ready to analyze {len(resumes_data)} candidate(s)")
-    
+
     # Process and analyze candidates
     if st.button("🚀 Find Best Candidates",
                  type="primary",
                  use_container_width=True):
         if not job_description.strip():
-            st.error("❌ Please enter a job description with specific requirements and responsibilities")
+            st.error(
+                "❌ Please enter a job description with specific requirements and responsibilities"
+            )
             st.markdown('</div>', unsafe_allow_html=True)
             return
 
@@ -500,8 +493,9 @@ def show_search_page():
             st.error(f"❌ An error occurred during analysis: {str(e)}")
             st.exception(e)
         finally:
-            st.markdown('</div>', unsafe_allow_html=True)  # Close CTA container
-    
+            st.markdown('</div>',
+                        unsafe_allow_html=True)  # Close CTA container
+
     else:
         st.markdown('</div>', unsafe_allow_html=True)  # Close CTA container
 
@@ -628,12 +622,15 @@ def show_results_page():
         }
     }
     </style>
-    """, unsafe_allow_html=True)
-    
+    """,
+                unsafe_allow_html=True)
+
     results = st.session_state.analysis_results
 
     if not results:
-        st.error("❌ No analysis results found. Please go back and run an analysis first.")
+        st.error(
+            "❌ No analysis results found. Please go back and run an analysis first."
+        )
         if st.button("← Back to Search"):
             st.session_state.current_page = 'search'
             st.rerun()
@@ -647,7 +644,8 @@ def show_results_page():
             <p class="results-subtitle">Analysis completed for: {results['job_description'][:80]}{'...' if len(results['job_description']) > 80 else ''}</p>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+                unsafe_allow_html=True)
 
     # Back navigation button
     if st.button("← Back to Search", key="back_to_search"):
@@ -672,13 +670,15 @@ def show_results_page():
     </div>
     """.format(
         results['total_candidates'],
-        np.mean([c['similarity'] for c in results['top_candidates']]) if results['top_candidates'] else 0,
-        results['top_candidates'][0]['similarity'] if results['top_candidates'] else 0
-    ), unsafe_allow_html=True)
+        np.mean([c['similarity'] for c in results['top_candidates']])
+        if results['top_candidates'] else 0,
+        results['top_candidates'][0]['similarity']
+        if results['top_candidates'] else 0),
+                unsafe_allow_html=True)
 
     # Enhanced candidate display section
     st.markdown("---")
-    
+
     for i, candidate in enumerate(results['top_candidates']):
         # Determine score styling
         score_percentage = candidate['similarity'] * 100
@@ -687,14 +687,14 @@ def show_results_page():
             score_color = "#4facfe"
             score_emoji = "🏆"
         elif score_percentage >= 60:
-            score_class = "good" 
+            score_class = "good"
             score_color = "#43e97b"
             score_emoji = "⭐"
         else:
             score_class = "fair"
             score_color = "#fa709a"
             score_emoji = "📋"
-        
+
         # Enhanced candidate card
         st.markdown(f"""
         <div style="
@@ -735,7 +735,8 @@ def show_results_page():
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
         # Expandable content with enhanced styling
         with st.expander("📋 View Details", expanded=(i < 3)):
@@ -753,7 +754,7 @@ def show_results_page():
 
             with col_right:
                 st.subheader("📊 Score Details")
-                
+
                 # Enhanced score display
                 st.markdown(f"""
                 <div style="
@@ -778,7 +779,8 @@ def show_results_page():
                         Rank #{i+1} of {len(results['top_candidates'])}
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+                """,
+                            unsafe_allow_html=True)
 
                 # Quality indicator
                 if score_percentage >= 80:
@@ -791,13 +793,14 @@ def show_results_page():
             # Generate AI summary if enabled
             if results['generate_summaries']:
                 st.markdown("---")
-                with st.spinner(f"🤖 Generating AI analysis for {candidate['name']}..."):
+                with st.spinner(
+                        f"🤖 Generating AI analysis for {candidate['name']}..."
+                ):
                     try:
-                        summary = results['ai_summarizer'].generate_fit_summary(
-                            results['job_description'],
-                            candidate['content'], 
-                            candidate['similarity']
-                        )
+                        summary = results[
+                            'ai_summarizer'].generate_fit_summary(
+                                results['job_description'],
+                                candidate['content'], candidate['similarity'])
 
                         st.markdown(f"""
                         <div style="
@@ -814,10 +817,12 @@ def show_results_page():
                                 {summary}
                             </p>
                         </div>
-                        """, unsafe_allow_html=True)
+                        """,
+                                    unsafe_allow_html=True)
 
                     except Exception as e:
-                        st.warning(f"⚠️ Could not generate AI summary: {str(e)}")
+                        st.warning(
+                            f"⚠️ Could not generate AI summary: {str(e)}")
 
     # Download results option
     if st.button("📥 Download Results as CSV"):
